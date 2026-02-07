@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Toko Mama</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  margin: 0;
+  padding: 20px;
+  color: #fff;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: #111827;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0,0,0,.4);
+}
+h1 {
+  text-align: center;
+}
+input, button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+button {
+  cursor: pointer;
+  background: #22c55e;
+  color: #000;
+  font-weight: bold;
+}
+button.delete {
+  background: #ef4444;
+  color: #fff;
+}
+button.edit {
+  background: #facc15;
+}
+table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #374151;
+  text-align: center;
+}
+.search {
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>📦 Daftar Harga Al Zafran's Store </h1>
+
+  <input id="nama" placeholder="Nama barang">
+  <input id="harga" type="number" placeholder="Harga">
+  <button onclick="tambahBarang()">➕ Tambah Barang</button>
+
+  <input id="search" class="search" placeholder="🔍 Cari barang..." onkeyup="filterData()">
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Harga</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="listBarang"></tbody>
+  </table>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA-1xf-SfbJFTlLpex38LNmsA9MCCV62E0",
+  authDomain: "toko-d1925.firebaseapp.com",
+  databaseURL: "https://toko-d1925-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "toko-d1925",
+  storageBucket: "toko-d1925.firebasestorage.app",
+  messagingSenderId: "367911528125",
+  appId: "1:367911528125:web:89c8071342e0dfb6f379d4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const barangRef = db.ref("barang");
+
+// TAMBAH
+function tambahBarang() {
+  const nama = document.getElementById("nama").value;
+  const harga = document.getElementById("harga").value;
+  if (!nama || !harga) return alert("Isi nama & harga!");
+
+  barangRef.push({ nama, harga });
+  document.getElementById("nama").value = "";
+  document.getElementById("harga").value = "";
+}
+
+// TAMPILKAN
+barangRef.on("value", snapshot => {
+  const tbody = document.getElementById("listBarang");
+  tbody.innerHTML = "";
+  snapshot.forEach(data => {
+    const item = data.val();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.nama}</td>
+      <td>Rp ${item.harga}</td>
+      <td>
+        <button class="edit" onclick="editBarang('${data.key}','${item.nama}','${item.harga}')">✏️</button>
+        <button class="delete" onclick="hapusBarang('${data.key}')">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+});
+
+// HAPUS
+function hapusBarang(id) {
+  if (confirm("Hapus barang ini?")) {
+    barangRef.child(id).remove();
+  }
+}
+
+// EDIT
+function editBarang(id,nama,harga) {
+  const namaBaru = prompt("Nama barang:", nama);
+  const hargaBaru = prompt("Harga:", harga);
+  if (namaBaru && hargaBaru) {
+    barangRef.child(id).update({
+      nama: namaBaru,
+      harga: hargaBaru
+    });
+  }
+}
+
+// SEARCH
+function filterData() {
+  const keyword = document.getElementById("search").value.toLowerCase();
+  const rows = document.querySelectorAll("#listBarang tr");
+  rows.forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+  });
+}
+</script>
+</body>
+</html>
